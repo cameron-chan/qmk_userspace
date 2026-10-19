@@ -8,6 +8,7 @@ Features:
 -   Various modes, can be switched (using Adjust layer and the selected one is stored in EEPROM.
 -   Modes for Qwerty and Colemak support
 -   Modes for Mac vs Linux/Win support -> different order of modifiers and different action shortcuts on the "UPPER" layer (the red one in the image). Designed to simplify transtions when switching between operating systems often.
+-   In Linux/Win mode, Alt+C and Alt+V send Ctrl+C and Ctrl+V; Shift is preserved for terminal copy/paste shortcuts. Mac mode passes Alt+C/V through unchanged.
 -   The OLED on master half shows selected mode and caps lock state and is rotated.
 -   Left encoder controls volume up/down/mute. Right encoder PGUP/PGDOWN.
 

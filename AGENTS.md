@@ -20,8 +20,11 @@
 ## Keep layout and firmware changes deliberate
 - Do not assume `map.json`, `keymap.c`, and the generated diagram synchronize automatically.
 - Editing `map.json` alone is not proof that the named firmware keymap has changed.
-- Compare the layout table and synchronize representations deliberately when requested.
-- Preserve custom C behavior while synchronizing; never blindly overwrite `keymap.c` with `json2c` output.
+- Use the repository-local `tmp/` directory for temporary output; create it with `mkdir -p tmp` when needed. It is excluded by the root `.gitignore`; do not track its contents.
+- For layout changes, `qmk json2c keyboards/sofle/keymaps/cameronchan/map.json > tmp/cameronchan-layout.c` produces reference C; it does not update the firmware source or build/flash firmware.
+- Only after `json2c` succeeds, compare its layout table to `keymap.c` and manually copy/reconcile intended layout entries when synchronization is requested. Never blindly overwrite `keymap.c` with `json2c` output.
+- Preserve custom C behavior while synchronizing, including `process_record_user` (and its Alt clipboard handling), OLED, and encoders. Preserve layer order, key positions, and mod-tap/layer-tap semantics; do not resolve unrelated discrepancies during a layout sync.
+- For behavior-only changes, edit `keymap.c`; do not change `map.json` or regenerate diagrams unless the layout itself changed.
 - A known discrepancy exists: layer 5 in `map.c` uses `AG_SWAP`, while `keymap.c` uses `AG_TOGG`.
 - Treat that discrepancy as a warning to inspect, not as permission to resolve or overwrite either source.
 - Preserve layer order, key positions, mod-tap semantics, and layer-tap semantics unless explicitly asked to change them.
