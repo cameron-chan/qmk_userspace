@@ -102,6 +102,42 @@ bool oled_task_user(void) {
 // }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    // In non-Mac mode, turn Alt+C/V into Ctrl+C/V (including Ctrl+Shift+C/V).
+    // Keep per-key state so the matching release is consumed even if mode or
+    // modifiers change while the key is held. LT(2, KC_V) holds are untouched;
+    // QMK passes the original LT keycode here; only taps (tap.count > 0) are
+    // treated as V. Both layer-hold edges pass through unchanged.
+    static bool alt_c_consumed;
+    static bool alt_v_consumed;
+    bool v_tap = keycode == LT(2, KC_V) && record->tap.count > 0;
+    bool is_c = keycode == KC_C;
+    bool is_v = keycode == KC_V || v_tap;
+    bool *consumed = is_c ? &alt_c_consumed : &alt_v_consumed;
+    if (is_c || is_v) {
+        if (!record->event.pressed && *consumed) {
+            *consumed = false;
+            return false;
+        }
+        if (record->event.pressed && !keymap_config.swap_lalt_lgui) {
+            uint8_t mods = get_mods();
+            uint8_t weak_mods = get_weak_mods();
+            uint8_t oneshot_mods = get_oneshot_mods();
+            uint8_t active_mods = mods | weak_mods | oneshot_mods;
+            if ((active_mods & MOD_MASK_ALT) && !(active_mods & (MOD_MASK_CTRL | MOD_MASK_GUI))) {
+                *consumed = true;
+                set_mods(mods & ~MOD_MASK_ALT);
+                set_weak_mods(weak_mods & ~MOD_MASK_ALT);
+                set_oneshot_mods(oneshot_mods & ~MOD_MASK_ALT);
+                tap_code16(LCTL(is_c ? KC_C : KC_V));
+                set_mods(mods);
+                set_weak_mods(weak_mods);
+                set_oneshot_mods(oneshot_mods);
+                send_keyboard_report();
+                return false;
+            }
+        }
+    }
+
     // switch (keycode) {
     //     case KC_QWERTY:
     //         if (record->event.pressed) {

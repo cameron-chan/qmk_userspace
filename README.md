@@ -39,6 +39,31 @@ This is a template repository which allows for an external set of QMK keymaps to
 
 Alternatively, if you configured your build targets above, you can use `qmk userspace-compile` to build all of your userspace targets at once.
 
+## Sofle layout and firmware source workflow
+
+For `sofle/rev1` / `cameronchan`, `keyboards/sofle/keymaps/cameronchan/map.json` is the layout source used for layout editing and diagram generation. The firmware build uses `keyboards/sofle/keymaps/cameronchan/keymap.c`; these files are not automatically synchronized.
+
+When changing the layout, edit `map.json`, then generate C as a reference for the layout table. Run these commands from the repository root; temporary files go in the Git-ignored `tmp/` directory:
+
+```sh
+mkdir -p tmp &&
+qmk json2c keyboards/sofle/keymaps/cameronchan/map.json > tmp/cameronchan-layout.c
+```
+
+After the command succeeds, compare the generated keymap table with the existing `keymap.c` and manually copy/reconcile only the intended layout entries. Do not replace the whole C file: it contains custom firmware behavior (including `process_record_user`, OLED, and encoder code) that must be preserved. Review layer order, key positions, and mod-tap/layer-tap semantics; do not resolve unrelated differences as part of a layout sync. `qmk json2c` only generates reference C—it does not update `keymap.c`, compile firmware, or flash a keyboard.
+
+Regenerate `keymap.yaml` and `keymap.svg` only when appropriate for a layout change. Use temporary output and replace the existing diagrams only after parsing and drawing both succeed:
+
+```sh
+mkdir -p tmp &&
+keymap parse -q keyboards/sofle/keymaps/cameronchan/map.json > tmp/cameronchan-keymap.yaml &&
+keymap draw tmp/cameronchan-keymap.yaml > tmp/cameronchan-keymap.svg &&
+mv tmp/cameronchan-keymap.yaml keymap.yaml &&
+mv tmp/cameronchan-keymap.svg keymap.svg
+```
+
+For behavior-only changes, edit `keymap.c` directly; no `map.json` or diagram synchronization is needed. Build the firmware with `qmk compile -kb sofle/rev1 -km cameronchan` (or `qmk userspace-compile` for configured userspace targets).
+
 ## Extra info
 
 If you wish to point GitHub actions to a different repository, a different branch, or even a different keymap name, you can modify `.github/workflows/build_binaries.yml` to suit your needs.
